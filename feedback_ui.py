@@ -11,6 +11,8 @@ import uuid
 import re  # 将re导入移至顶部
 from datetime import datetime
 from typing import Optional, TypedDict, List
+import logging
+logger = logging.getLogger(__name__)
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -743,6 +745,21 @@ class FeedbackUI(QMainWindow):
         # 重置字体: Ctrl+0
         reset_font = QShortcut(QKeySequence("Ctrl+0"), self)
         reset_font.activated.connect(self.reset_font_size)
+
+        # --- 新增快捷键 ---
+        # 关闭窗口：Esc
+        esc_shortcut = QShortcut(QKeySequence("Esc"), self)
+        esc_shortcut.activated.connect(self.close)
+        # 关闭窗口：Ctrl/Cmd + W
+        close_shortcut = QShortcut(QKeySequence("Ctrl+W"), self)
+        close_shortcut.activated.connect(self.close)
+        close_shortcut_cmd = QShortcut(QKeySequence("Meta+W"), self)
+        close_shortcut_cmd.activated.connect(self.close)
+        # 退出应用：Ctrl/Cmd + Q
+        quit_shortcut = QShortcut(QKeySequence("Ctrl+Q"), self)
+        quit_shortcut.activated.connect(QApplication.instance().quit)
+        quit_shortcut_cmd = QShortcut(QKeySequence("Meta+Q"), self)
+        quit_shortcut_cmd.activated.connect(QApplication.instance().quit)
 
     def adjust_font_size(self, factor: float):
         """按比例调整所有字体大小"""

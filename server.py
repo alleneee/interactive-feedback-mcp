@@ -12,9 +12,22 @@ from typing import Annotated, Dict, Tuple, List
 
 from fastmcp import FastMCP, Image
 from pydantic import Field
+import logging
+from logging.handlers import RotatingFileHandler
 
 # The log_level is necessary for Cline to work: https://github.com/jlowin/fastmcp/issues/81
 mcp = FastMCP("Interactive Feedback MCP", log_level="ERROR")
+
+# ----- 日志配置 -----
+log_dir = os.path.expanduser("~/.interactive-feedback")
+os.makedirs(log_dir, exist_ok=True)
+log_path = os.path.join(log_dir, "if.log")
+
+handler = RotatingFileHandler(log_path, maxBytes=1_000_000, backupCount=3, encoding="utf-8")
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+handler.setFormatter(formatter)
+logging.basicConfig(level=logging.INFO, handlers=[handler])
+logger = logging.getLogger(__name__)
 
 def launch_feedback_ui(summary: str, predefinedOptions: list[str] | None = None) -> dict[str, str]:
     # Create a temporary file for the feedback result
@@ -55,9 +68,11 @@ def launch_feedback_ui(summary: str, predefinedOptions: list[str] | None = None)
         os.unlink(output_file)
         return result
     except Exception as e:
+        logger.exception("launch_feedback_ui error: %s", e)
         if os.path.exists(output_file):
             os.unlink(output_file)
-        raise e
+        # 回退：返回空反馈，避免上游崩溃
+        return {"interactive_feedback": "", "images": []}
 
 @mcp.tool()
 def interactive_feedback(
